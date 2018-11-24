@@ -1,22 +1,15 @@
-//
-//  CarColorPlateLocation.cpp
-//  CarPlateRecognize
-//
-//  Created by liuxiang on 2017/7/30.
-//  Copyright © 2017年 liuxiang. All rights reserved.
-//
 
 #include "common.h"
 
-CarColorPlateLocation::CarColorPlateLocation(){
+ImgColorPlateLocation::ImgColorPlateLocation(){
     
 }
 
-CarColorPlateLocation::~CarColorPlateLocation(){
+ImgColorPlateLocation::~ImgColorPlateLocation(){
     
 }
 
-void CarColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
+void ImgColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
     Mat src_hsv;
     //分割hsv
 //    色相（H）是色彩的基本属性，就是平常所说的颜色名称，如红色、黄色等。
@@ -49,6 +42,9 @@ void CarColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
         cols *= rows;
         rows = 1;
     }
+    int leftCount =0 ;
+    int rightCount =0 ;
+    //LOGI("cols:%d,%d",rows,cols);
     for (int i = 0; i < rows; ++i){
         //获得该行数据
         uchar*  p = src_hsv.ptr<uchar>(i);
@@ -58,14 +54,18 @@ void CarColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
             int S = int(p[j + 1]);  // 0-255
             int V = int(p[j + 2]);  // 0-255
             bool colorMatched = false;
-            if(H< 1 && S < 1 && 255 == V)
+
+            if(H== 0 && S == 0 && 255 == V)
             {
+                leftCount++;
                 colorMatched = true;
             }else if (H > MIN_H && H < MAX_H) {
                 colorMatched = true;
+                rightCount++;
             }
             
             if (colorMatched) {
+
                 p[j] = 0;
                 p[j + 1] = 0;
                 p[j + 2] = 255;
@@ -78,24 +78,24 @@ void CarColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
             
         }
     }
-    
+    //LOGI("colorMatched:%d,%d",leftCount,rightCount);
 //    imshow("a", src_hsv);
 //    waitKey();
     
     
     vector<Mat> hsv_split_c;
     split(src_hsv, hsv_split_c);
-    
+    //LOGI("hsv_split_c:%d",hsv_split_c.size());
     Mat src_threshold;
     threshold(hsv_split_c[2], src_threshold, 0, 255,
               CV_THRESH_OTSU + CV_THRESH_BINARY);
 //    imshow("a", src_threshold);
 //    waitKey();
 
-    
-    Mat element = getStructuringElement(MORPH_RECT, Size(10, 2));
+    //LOGI("src_threshold:%d",src_threshold.size);
+    Mat element = getStructuringElement(MORPH_RECT, Size(1, 1));
     morphologyEx(src_threshold, src_threshold, MORPH_CLOSE, element);
-    
+    //LOGI("element:%d",element.size);
 //    imshow("a", src_threshold);
 //    waitKey();
 
@@ -103,27 +103,29 @@ void CarColorPlateLocation::plateLocate(Mat src, vector<Mat > &plates){
     vector<RotatedRect> colors_plates;
     vector<vector<Point> > contours;
     findContours(src_threshold,contours,RETR_EXTERNAL,CHAIN_APPROX_NONE);
+    //LOGI("contours c:%d",contours.size());
     for (auto cnt : contours) {
          RotatedRect mr = minAreaRect(cnt);
         if (verifySizes(mr)){
             colors_plates.push_back(mr);
 //            rectangle(src, mr.boundingRect().tl(), mr.boundingRect().br(), Scalar::all(0));
         }
+        cnt.clear();
     }
-    
-    
+
 //    imshow("b", src);
 //    waitKey();
     tortuosity(src, colors_plates, plates);
-    src_hsv.release();
-    for (auto hsv:hsv_split_c) {
-        hsv.release();
-    }
     for (auto hsv:hsv_split) {
         hsv.release();
     }
-    src_threshold.release();
     element.release();
+    src_threshold.release();
+    colors_plates.clear();
+    for (auto hsv:hsv_split_c) {
+        hsv.release();
+    }
+    src.release();
 //    
 //    imshow("a", src_threshold);
 //    waitKey();

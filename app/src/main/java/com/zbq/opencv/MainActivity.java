@@ -1,4 +1,4 @@
-package com.lichao.opencv_carplate;
+package com.zbq.opencv;
 
 import android.Manifest;
 import android.app.ProgressDialog;

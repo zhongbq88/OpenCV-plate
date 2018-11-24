@@ -1,23 +1,16 @@
-//
-//  CarPlateLocation.cpp
-//  CarPlateRecognize
-//
-//  Created by liuxiang on 2017/7/30.
-//  Copyright © 2017年 liuxiang. All rights reserved.
-//
 
 #include "common.h"
 
-CarPlateLocation::CarPlateLocation() {}
+ImgPlateLocation::ImgPlateLocation() {}
 
-CarPlateLocation::~CarPlateLocation() {}
+ImgPlateLocation::~ImgPlateLocation() {}
 
 
-int CarPlateLocation::verifySizes(RotatedRect rotated_rect) {
+int ImgPlateLocation::verifySizes(RotatedRect rotated_rect) {
+
 
     //面积
     float area = rotated_rect.size.height * rotated_rect.size.width;
-    //可能是竖的车牌 宽比高小就用 高宽比
     float r = (float) rotated_rect.size.height / (float) rotated_rect.size.width;
     if ( area< MIN_AREA || r>MAX_R || rotated_rect.size.height<MIN_HEIGHT)
         return 0;
@@ -25,7 +18,7 @@ int CarPlateLocation::verifySizes(RotatedRect rotated_rect) {
 }
 
 
-void CarPlateLocation::rotation(Mat src, Mat &dst, Size rect_size,
+void ImgPlateLocation::rotation(Mat src, Mat &dst, Size rect_size,
                                 Point2f center, double angle) {
 
     //获得旋转矩阵
@@ -43,7 +36,7 @@ void CarPlateLocation::rotation(Mat src, Mat &dst, Size rect_size,
 }
 
 
-void CarPlateLocation::safeRect(Mat src, RotatedRect &rect, Rect2f &dst_rect) {
+void ImgPlateLocation::safeRect(Mat src, RotatedRect &rect, Rect2f &dst_rect) {
     Rect2f boudRect = rect.boundingRect2f();
     float tl_x = boudRect.x > 0 ? boudRect.x : 0;
     float tl_y = boudRect.y > 0 ? boudRect.y : 0;
@@ -63,9 +56,9 @@ void CarPlateLocation::safeRect(Mat src, RotatedRect &rect, Rect2f &dst_rect) {
 }
 
 
-void CarPlateLocation::tortuosity(Mat src, vector<RotatedRect> &rects,
+void ImgPlateLocation::tortuosity(Mat src, vector<RotatedRect> &rects,
                                   vector<Mat> &dst_plates) {
-    for (auto roi_rect : rects) {
+    /*for (auto roi_rect : rects) {
         float r = (float) roi_rect.size.width / (float) roi_rect.size.height;
         float roi_angle = roi_rect.angle;
         Size roi_rect_size = roi_rect.size;
@@ -90,14 +83,31 @@ void CarPlateLocation::tortuosity(Mat src, vector<RotatedRect> &rects,
             deskew_mat = rotated_mat;
         }
         //一个大致宽高比范围
-       /* if (deskew_mat.cols * 1.0 / deskew_mat.rows > 2.3 &&
-            deskew_mat.cols * 1.0 / deskew_mat.rows < 6) {*/
+       *//* if (deskew_mat.cols * 1.0 / deskew_mat.rows > 2.3 &&
+            deskew_mat.cols * 1.0 / deskew_mat.rows < 6) {*//*
             Mat plate_mat;
             plate_mat.create(roi_rect.size.height, roi_rect.size.width, CV_8UC3);
             resize(deskew_mat, plate_mat, plate_mat.size());
             dst_plates.push_back(plate_mat);
        // }
         deskew_mat.release();
+    }*/
+
+    for (auto roi_rect : rects) {
+        float r = roi_rect.size.width / roi_rect.size.height;
+       // LOGI("%f,%f,%f",r,roi_rect.size.width,roi_rect.size.height);
+        Rect2f rect;
+        safeRect(src, roi_rect, rect);
+        Mat src_rect = src(rect);
+        Mat plate_mat;
+        if(r>1){
+            plate_mat.create(roi_rect.size.height, roi_rect.size.width, CV_8UC3);
+        }else{
+            plate_mat.create(roi_rect.size.width, roi_rect.size.height, CV_8UC3);
+        }
+        resize(src_rect, plate_mat, plate_mat.size());
+        dst_plates.push_back(plate_mat);
+        src_rect.release();
     }
 }
 

@@ -1,20 +1,13 @@
-//
-//  CarPlateLocation.hpp
-//  CarPlateRecognize
-//
-//  Created by liuxiang on 2017/7/30.
-//  Copyright © 2017年 liuxiang. All rights reserved.
-//
 
-#ifndef CarPlateLocation_hpp
-#define CarPlateLocation_hpp
+#ifndef ImgPlateLocation_hpp
+#define ImgPlateLocation_hpp
 
 
-class CarPlateLocation {
+class ImgPlateLocation {
 public:
-    CarPlateLocation();
+    ImgPlateLocation();
 
-    virtual ~CarPlateLocation();
+    virtual ~ImgPlateLocation();
 
     virtual void plateLocate(Mat src, vector<Mat> &plates) = 0;
 
@@ -29,4 +22,4 @@ protected:
 
 };
 
-#endif /* CarPlateLocation_hpp */
+#endif /* ImgPlateLocation_hpp */
